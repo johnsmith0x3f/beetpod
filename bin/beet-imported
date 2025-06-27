@@ -1,0 +1,31 @@
+#!/bin/sh
+
+zero() {
+	local -a tags=(
+		"ALBUM"
+		"ALBUMARTIST"
+		"ARTIST"
+		"DATE"
+		"DISCNUMBER"
+		"GENRE"
+		"TITLE"
+		"TRACKNUMBER"
+	)
+
+	# Remove embedded cover arts and unwanted tags.
+	metaflac --remove --block-type="PICTURE" "$1"
+	metaflac --remove-all-tags-except="$( IFS="="; echo "${tags[*]}" )" "$1"
+
+	# Mash tags of the same field into one string.
+	for tag in "${tags[@]}"; do
+		metaflac --show-tag="$tag" "$1" | paste -d " " -s | sed "s/ $tag=/; /g"
+	done | metaflac --remove-all-tags --import-tags-from="-" "$1"
+
+	# Replace Unicode quotes with ASCII ones in metadata.
+	metaflac --show-all-tags "$1" | sed -E "s/‘|’/'/g" |
+	metaflac --remove-all-tags --import-tags-from="-" "$1"
+}
+
+for flac in $1/*.flac; do
+	[ -f "$flac" ] && zero "$flac"
+done
