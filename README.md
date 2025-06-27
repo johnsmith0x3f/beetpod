@@ -1,3 +1,3 @@
 # beetpod
 
-Container for [beets](https://beets.io).
+Plant [beets](https://beets.io) in [pods](https://podman.io).
