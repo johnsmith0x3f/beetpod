@@ -5,7 +5,7 @@ build:
 	@podman build -t beetpod .
 
 run:
-	@podman run --rm -it \
+	@podman run --init --rm -it \
 		-v "$(HOME)/Music:/root/Music" \
 		-v "$(XDG_CONFIG_HOME)/beets:/root/.config/beets" \
-		beetpod zsh
+		beetpod fish
