@@ -1,31 +1,34 @@
 #!/bin/sh
 
 zero() {
-	local -a tags=(
-		"ALBUM"
-		"ALBUMARTIST"
-		"ARTIST"
-		"DATE"
-		"DISCNUMBER"
-		"GENRE"
-		"TITLE"
-		"TRACKNUMBER"
-	)
+	# Select tags to preserve.
+	tags="ALBUM ALBUMARTIST ARTIST DATE DISCNUMBER GENRE TITLE TRACKNUMBER"
 
 	# Remove embedded cover arts and unwanted tags.
 	metaflac --remove --block-type="PICTURE" "$1"
-	metaflac --remove-all-tags-except="$( IFS="="; echo "${tags[*]}" )" "$1"
+	metaflac --remove-all-tags-except="$( echo "$tags" | tr " " "=" )" "$1"
+
+	# Create a temporary file to store tags.
+	temp_tags="$( mktemp )"
+	metaflac --export-tags-to="$temp_tags" "$1"
+	# Replace "feat."s and "ft."s with actual separators.
+	sed -i -r "s/ (feat|ft)\. /;/g" "$temp_tags"
+	# Replace Unicode quotes with ASCII ones in metadata.
+	sed -i -r "s/‘|’/'/g" "$temp_tags"
+	# Replace badly formatted separators with good ones.
+	sed -i -r "s/(,|;) +/; /g" "$temp_tags"
+	# Sort and remove duplicate tags.
+	sort -u "$temp_tags" -o "$temp_tags"
+	# Re-import formatted tags and delete the temp file.
+	metaflac --remove-all-tags --import-tags-from="$temp_tags" "$1"
+	rm -f "$temp_tags"
 
 	# Mash tags of the same field into one string.
-	for tag in "${tags[@]}"; do
-		metaflac --show-tag="$tag" "$1" | paste -d " " -s | sed "s/ $tag=/; /g"
+	for tag in $tags; do
+		metaflac --show-tag="$tag" "$1" | paste -sd " " | sed "s/ $tag=/; /g"
 	done | metaflac --remove-all-tags --import-tags-from="-" "$1"
-
-	# Replace Unicode quotes with ASCII ones in metadata.
-	metaflac --show-all-tags "$1" | sed -E "s/‘|’/'/g" |
-	metaflac --remove-all-tags --import-tags-from="-" "$1"
 }
 
-for flac in $1/*.flac; do
+for flac in "$1"/*.flac; do
 	[ -f "$flac" ] && zero "$flac"
 done
