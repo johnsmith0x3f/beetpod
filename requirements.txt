@@ -1,2 +1,4 @@
 beets[fetchart]
 beets-filetote
+
+git+https://github.com/edgars-supe/beets-importreplace.git
