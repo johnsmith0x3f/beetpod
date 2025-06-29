@@ -1,0 +1,19 @@
+include: [ "config-plugins.yaml" ]
+
+# Handle different releases with the same names by same artists.
+# Check the release years and labels, for both albums (EPs) and singletons.
+aunique:
+  keys: albumartist album
+  disambiguators: albumtype year label albumdisambig
+  bracket: "()"
+sunique:
+  keys: artist title
+  disambiguators: year label trackdisambig
+  bracket: "()"
+
+# Set the directory hierarchy.
+# Prepend special categories with '#' for sorting and viewing.
+paths:
+  default: "$albumartist/[$original_year] $album%aunique{}/$track $title"
+  singleton: "$artist/#Singles/[$original_year] $title%sunique{}/$track $title"
+  comp: "#VariousArtists/[$original_year] $album%aunique{}/$track $title"
